@@ -1,6 +1,6 @@
 /*
 	Author: Aniket Badhan
-	Description: 
+	Description: Generating Transactions based on the testcase and putting it into mailbox from where the Master BFM can access it
 */
 
 class axiGen;
