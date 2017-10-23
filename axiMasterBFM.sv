@@ -31,31 +31,31 @@ class axiMasterBFM;
 
 	task driveTx(axiTx tx);
 		case(tx.writeRead) begin
-			NOP				:	begin
+			NOP		: begin
 
-									end
-			WRITE			:	begin
-										writeAddressPhase(tx);
-										writeDataPhase(tx);
-										writeResponsePhase(tx);
-									end
-			READ			: begin
-										readAddressPhase(tx);
-										readDataPhase(tx);
-									end
+					  end
+			WRITE		: begin
+						writeAddressPhase(tx);
+						writeDataPhase(tx);
+						writeResponsePhase(tx);
+					  end
+			READ		: begin
+						readAddressPhase(tx);
+						readDataPhase(tx);
+					  end
 			WRITEREAD	: begin
-										fork
-											begin
-												writeAddressPhase(tx);
-												writeDataPhase(tx);
-												writeResponsePhase(tx);
-											end
-											begin
-												readAddressPhase(tx);
-												readDataPhase(tx);
-											end
-										join
-									end
+						fork
+							begin
+								writeAddressPhase(tx);
+								writeDataPhase(tx);
+								writeResponsePhase(tx);
+							end
+							begin
+								readAddressPhase(tx);
+								readDataPhase(tx);
+							end
+						join
+					  end
 		endcase
 	endtask
 
@@ -91,29 +91,29 @@ class axiMasterBFM;
 	endtask
 
 	task writeDataPhase(axiTx tx);
-			bit wReadyFlag = 0;
-			$display("Write Data phase");
-			for (int i = 0; i <= tx.wr_len; i++) begin
-				smpWData.get(1);
-				vif.wdata = tx.writeDataQueue.pop_front();
-				vif.wstrb = tx.writeStrbQueue.pop_front();
-				vif.wid = tx.writeID;
-				vif.wvalid = 1;
-				vif.wlast = 0;
-				if (i == tx.wr_len) vif.wlast = 1;
-				while (wReadyFlag == 0) begin
-					@(posedge vif.aclk);
-					if (vif.wready == 1) wReadyFlag = 1;
-				end
-				@(negedge vif.aclk);
-				vif.wvalid = 1'b0;
-				vif.wdata = 1'b0;
-				vif.wid = 1'b0;
-				vif.wstrb = 1'b0;
-				vif.wlast = 1'b0;
-				wReadyFlag = 0;
-				smpWData.put(1);
+		bit wReadyFlag = 0;
+		$display("Write Data phase");
+		for (int i = 0; i <= tx.wr_len; i++) begin
+			smpWData.get(1);
+			vif.wdata = tx.writeDataQueue.pop_front();
+			vif.wstrb = tx.writeStrbQueue.pop_front();
+			vif.wid = tx.writeID;
+			vif.wvalid = 1;
+			vif.wlast = 0;
+			if (i == tx.wr_len) vif.wlast = 1;
+			while (wReadyFlag == 0) begin
+				@(posedge vif.aclk);
+				if (vif.wready == 1) wReadyFlag = 1;
 			end
+			@(negedge vif.aclk);
+			vif.wvalid = 1'b0;
+			vif.wdata = 1'b0;
+			vif.wid = 1'b0;
+			vif.wstrb = 1'b0;
+			vif.wlast = 1'b0;
+			wReadyFlag = 0;
+			smpWData.put(1);
+		end
 	endtask
 
 	task writeResponsePhase(axiTx tx);
@@ -164,15 +164,15 @@ class axiMasterBFM;
 		bit readFlag = 0;
 		$display("Read Data Phase");
 		for (int i = 0; i <= tx.readLength; i++) begin
-		    while (readFlag == 0) begin
-					@(posedge vif.aclk);
-					if (vif.rvalid == 1 && vif.rid == tx.readID) begin
-						readFlag = 1;
-						vif.rready = 1;
-						tx.readResponse = vif.rresp;
-					end
-		    end
-				readFlag = 0;
+			while (readFlag == 0) begin
+				@(posedge vif.aclk);
+				if (vif.rvalid == 1 && vif.rid == tx.readID) begin
+					readFlag = 1;
+					vif.rready = 1;
+					tx.readResponse = vif.rresp;
+				end
+		    	end
+			readFlag = 0;
 		end
 	endtask
 
