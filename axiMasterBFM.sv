@@ -5,6 +5,7 @@
 
 class axiMasterBFM;
 	axiTx tx;
+	//using semaphore to mkae sure that the virtual interface is shared across all the tasks
 	semaphore smpAwaddr = new(1);
 	semaphore smpWData = new(1);
 	semaphore smpAraddr = new(1);
@@ -17,9 +18,9 @@ class axiMasterBFM;
 			forever begin
 				axiConfig::genToBFM.get(tx);
 				tx.print;
-				fork
+				fork				//this is to achieve out of order or overlapping transactions
 					driveTx(tx);
-				join_none;
+				join_none
 			end
 			forever begin
 				@(posedge vif.aclk);
@@ -38,7 +39,7 @@ class axiMasterBFM;
 						writeAddressPhase(tx);
 						writeDataPhase(tx);
 						writeResponsePhase(tx);
-					  end
+			 		  end
 			READ		: begin
 						readAddressPhase(tx);
 						readDataPhase(tx);
@@ -58,7 +59,8 @@ class axiMasterBFM;
 					  end
 		endcase
 	endtask
-
+	
+	// task for assigning signals on the interface for the write address phase
 	task writeAddressPhase(axiTx tx);
 		bit awreadyFlag = 0;
 		$display("Write Address phase");
@@ -89,33 +91,36 @@ class axiMasterBFM;
 		awreadyFlag = 0;
 		smpAwaddr.put(1);
 	endtask
-
+	
+	// task for assigning signals on the interface for the write data phase
 	task writeDataPhase(axiTx tx);
-		bit wReadyFlag = 0;
-		$display("Write Data phase");
-		for (int i = 0; i <= tx.wr_len; i++) begin
-			smpWData.get(1);
-			vif.wdata = tx.writeDataQueue.pop_front();
-			vif.wstrb = tx.writeStrbQueue.pop_front();
-			vif.wid = tx.writeID;
-			vif.wvalid = 1;
-			vif.wlast = 0;
-			if (i == tx.wr_len) vif.wlast = 1;
-			while (wReadyFlag == 0) begin
-				@(posedge vif.aclk);
-				if (vif.wready == 1) wReadyFlag = 1;
+			bit wReadyFlag = 0;
+			$display("Write Data phase");
+			for (int i = 0; i <= tx.wr_len; i++) begin
+				smpWData.get(1);
+				vif.wdata = tx.writeDataQueue.pop_front();
+				vif.wstrb = tx.writeStrbQueue.pop_front();
+				vif.wid = tx.writeID;
+				vif.wvalid = 1;
+				vif.wlast = 0;
+				if (i == tx.wr_len) vif.wlast = 1;		//in the last iteration of data, send wlast = 1
+				while (wReadyFlag == 0) begin
+					@(posedge vif.aclk);
+					if (vif.wready == 1) wReadyFlag = 1;
+				end
+				//resetting the values after the operation is performed
+				@(negedge vif.aclk);
+				vif.wvalid = 1'b0;
+				vif.wdata = 1'b0;
+				vif.wid = 1'b0;
+				vif.wstrb = 1'b0;
+				vif.wlast = 1'b0;
+				wReadyFlag = 0;
+				smpWData.put(1);
 			end
-			@(negedge vif.aclk);
-			vif.wvalid = 1'b0;
-			vif.wdata = 1'b0;
-			vif.wid = 1'b0;
-			vif.wstrb = 1'b0;
-			vif.wlast = 1'b0;
-			wReadyFlag = 0;
-			smpWData.put(1);
-		end
 	endtask
-
+	
+	// task for assigning signals on the interface for the write response phase
 	task writeResponsePhase(axiTx tx);
 		bit bValidFlag = 0;
 		$display("Write Response phase");
@@ -129,7 +134,7 @@ class axiMasterBFM;
 		end
 	endtask
 
-
+	// task for assigning signals on the interface for the read address phase
 	task readAddressPhase(axiTx tx);
 		bit aReadyFlag = 0;
 		$display("Read Address phase");
@@ -159,7 +164,7 @@ class axiMasterBFM;
 		smpAraddr.put(1);
 	endtask
 
-
+	// task for assigning signals on the interface for the read data phase
 	task readDataPhase(axiTx tx);
 		bit readFlag = 0;
 		$display("Read Data Phase");
@@ -171,7 +176,7 @@ class axiMasterBFM;
 					vif.rready = 1;
 					tx.readResponse = vif.rresp;
 				end
-		    	end
+		  	end
 			readFlag = 0;
 		end
 	endtask
