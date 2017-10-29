@@ -17,6 +17,7 @@ class axiTx;
 	rand bit [3:0] writeLock;
 	rand bit [3:0] writeID;
 	rand bit [3:0] writeProt;
+	rand bit [1:0] writeResponse;		
 
 	//READ
 	rand bit [31:0] readAddress;
@@ -28,6 +29,7 @@ class axiTx;
 	rand bit [3:0] readLock;
 	rand bit [3:0] readID;
 	rand bit [3:0] readProt;
+	rand bit [1:0] readResponse		
 
 	//constraints
 	constraint writeReadConst{
@@ -52,6 +54,7 @@ class axiTx;
 			$display("Write Lock: %h", writeLock);
 			$display("Write ID: %h", writeID);
 			$display("Write Protection: %h", writeProt);
+			$display("Write Response: %h", writeResponse);
 		end
 		if(readRead == READ) begin
 			$display("AXI READ TX");
@@ -63,6 +66,7 @@ class axiTx;
 			$display("Read Lock: %h", readLock);
 			$display("Read ID: %h", readID);
 			$display("Read Protection: %h", readProt);
+			$display("Read Response: %h", readResponse);
 		end
 		if(writeRead == WRITEREAD) begin
 			$display("AXI WRITE TX");
@@ -100,6 +104,7 @@ class axiTx;
 		outputTx.writeLock = this.writeLock;
 		outputTx.writeID = this.writeID;
 		outputTx.writeProt = this.writeProt;
+		outputTx.writeResponse = this.writeResponse;
 		outputTx.readAddress = this.readAddress;
 		outputTx.readDataQueue = this.readDataQueue;
 		outputTx.readLength = this.readLength;
@@ -109,6 +114,7 @@ class axiTx;
 		outputTx.readLock = this.readLock;
 		outputTx.readID = this.readID;
 		outputTx.readProt = this.readProt;
+		outputTx.readResponse = this.readResponse;
 	endfunction
 
 	//function to compare the axi transaction
@@ -146,6 +152,9 @@ class axiTx;
 		if(inputTx.writeProt == this.writeProt) begin
 			return 0;
 		end
+		if(inputTx.writeResponse == this.writeResponse) begin
+			return 0;
+		end
 		if(inputTx.readAddress == this.readAddress) begin
 			return 0;
 		end
@@ -171,6 +180,9 @@ class axiTx;
 			return 0;
 		end
 		if(inputTx.readProt == this.readProt) begin
+			return 0;
+		end
+		if(inputTx.readResponse == this.readResponse) begin
 			return 0;
 		end
 		return 1;
