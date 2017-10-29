@@ -37,10 +37,67 @@ class axi_slave_bfm;
 			//Write data phase
 			if (vif.wvalid == 1) begin
 				vif.wready = 1;
-				mem[writeArray[vif.wid].writeAddress] = vif.wdata[7:0];
-				mem[writeArray[vif.wid].writeAddress+1] = vif.wdata[15:8];
-				mem[writeArray[vif.wid].writeAddress+2] = vif.wdata[23:16];
-				mem[writeArray[vif.wid].writeAddress+3] = vif.wdata[31:24];
+
+				if(writeArray[wid].writeBurstSize == 3) begin
+					mem[writeArray[vif.wid].writeAddress] = vif.wdata[7:0];
+					mem[writeArray[vif.wid].writeAddress+1] = vif.wdata[15:8];
+					mem[writeArray[vif.wid].writeAddress+2] = vif.wdata[23:16];
+					mem[writeArray[vif.wid].writeAddress+3] = vif.wdata[31:24];
+					mem[writeArray[vif.wid].writeAddress+4] = vif.wdata[39:32];
+					mem[writeArray[vif.wid].writeAddress+5] = vif.wdata[47:40];
+					mem[writeArray[vif.wid].writeAddress+6] = vif.wdata[55:48];
+					mem[writeArray[vif.wid].writeAddress+7] = vif.wdata[63:56];
+					if(writeArray[vif.wid].writeBurstTypeVar == INCR) begin
+						writeArray[vif.wid].writeAddress = writeArray[vif.wid].writeAddress + 8;
+					end
+					if(writeArray[vif.wid].writeBurstTypeVar == WRAP) begin
+						writeArray[vif.wid].writeAddress = writeArray[vif.wid].writeAddress + 8;
+						if(writeArray[vif.wid].writeAddress >= writeArray[vif.wid].wrapUpperBoundary) begin
+							writeArray[vif.wid].writeAddress = writeArray[vif.wid].wrapLowerBoundary
+						end
+					end
+				end
+
+				if(writeArray[wid].writeBurstSize == 2) begin
+					mem[writeArray[vif.wid].writeAddress] = vif.wdata[7:0];
+					mem[writeArray[vif.wid].writeAddress+1] = vif.wdata[15:8];
+					mem[writeArray[vif.wid].writeAddress+2] = vif.wdata[23:16];
+					mem[writeArray[vif.wid].writeAddress+3] = vif.wdata[31:24];
+					if(writeArray[vif.wid].writeBurstTypeVar == INCR) begin
+						writeArray[vif.wid].writeAddress = writeArray[vif.wid].writeAddress + 4;
+					end
+					if(writeArray[vif.wid].writeBurstTypeVar == WRAP) begin
+						writeArray[vif.wid].writeAddress = writeArray[vif.wid].writeAddress + 4;
+						if(writeArray[vif.wid].writeAddress >= writeArray[vif.wid].wrapUpperBoundary) begin
+							writeArray[vif.wid].writeAddress = writeArray[vif.wid].wrapLowerBoundary
+						end
+					end
+				end
+				if(writeArray[wid].writeBurstSize == 1) begin
+					mem[writeArray[vif.wid].writeAddress] = vif.wdata[7:0];
+					mem[writeArray[vif.wid].writeAddress+1] = vif.wdata[15:8];
+					if(writeArray[vif.wid].writeBurstTypeVar == INCR) begin
+						writeArray[vif.wid].writeAddress = writeArray[vif.wid].writeAddress + 2;
+					end
+					if(writeArray[vif.wid].writeBurstTypeVar == WRAP) begin
+						writeArray[vif.wid].writeAddress = writeArray[vif.wid].writeAddress + 2;
+						if(writeArray[vif.wid].writeAddress >= writeArray[vif.wid].wrapUpperBoundary) begin
+							writeArray[vif.wid].writeAddress = writeArray[vif.wid].wrapLowerBoundary
+						end
+					end
+				end
+				if(writeArray[wid].writeBurstSize == 0) begin
+					mem[writeArray[vif.wid].writeAddress] = vif.wdata[7:0];
+					if(writeArray[vif.wid].writeBurstTypeVar == INCR) begin
+						writeArray[vif.wid].writeAddress = writeArray[vif.wid].writeAddress + 1;
+					end
+					if(writeArray[vif.wid].writeBurstTypeVar == WRAP) begin
+						writeArray[vif.wid].writeAddress = writeArray[vif.wid].writeAddress + 1;
+						if(writeArray[vif.wid].writeAddress >= writeArray[vif.wid].wrapUpperBoundary) begin
+							writeArray[vif.wid].writeAddress = writeArray[vif.wid].wrapLowerBoundary
+						end
+					end
+				end
 				if (vif.wlast == 1) begin
 					doWriteResponse(vif.wid);
 				end
@@ -83,7 +140,7 @@ class axi_slave_bfm;
 			if (i == readArray[rid].readLength) begin
 				vif.rlast = 1;
 			end
-
+			//TODO add support for readBurstSize = 0, 1 and 3, below code is only for readBurstSize = 2
 			if  (mem.exists(readArray[rid].readAddress)) begin			//if condition to make sure if the address at which data tp be read exists.
 				vif.rdata[7:0] = mem[readArray[rid].readAddress];
 				vif.rdata[15:8] = mem[readArray[rid].readAddress+1];
