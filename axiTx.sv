@@ -4,6 +4,9 @@
 */
 
 class axiTx;
+
+	bit [31:0] wrapUpperBoundary;
+	bit [31:0] wrapLowerBoundary;
 	//write, read, write/read
 	//WRITE
 	rand writeReadType writeRead;
@@ -17,7 +20,7 @@ class axiTx;
 	rand bit [3:0] writeLock;
 	rand bit [3:0] writeID;
 	rand bit [3:0] writeProt;
-	rand bit [1:0] writeResponse;		
+	rand bit [1:0] writeResponse;		//TODO: Add this in the print, compare and copy functions
 
 	//READ
 	rand bit [31:0] readAddress;
@@ -29,7 +32,7 @@ class axiTx;
 	rand bit [3:0] readLock;
 	rand bit [3:0] readID;
 	rand bit [3:0] readProt;
-	rand bit [1:0] readResponse		
+	rand bit [1:0] readResponse		//TODO: Add this in the print, compare and copy functions
 
 	//constraints
 	constraint writeReadConst{
@@ -40,6 +43,13 @@ class axiTx;
 		writeDataQueue.size() == writeLength + 1;
 		readDataQueue.size() == readLength + 1;
 	}
+
+	function void post_randomize();
+		int txSize = (writeLength + 1) * (2**writeBurstSize);
+		bit [31:0] offset = writeAddress%txSize;
+		wrapLowerBoundary = writeAddress - offset;
+		wrapUpperBoundary = wrapLowerBoundary + txSize - 1'b1;
+	endfunction
 
 	//methods: Print, compare, copy (copy can be made as shallow copy as there is no object under object)
 	function void print();
